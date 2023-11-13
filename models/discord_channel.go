@@ -12,6 +12,7 @@ type DiscordChannel struct {
 	ChannelId   string    `db:"channel_id,unique"`
 	ServerId    string    `db:"server_id,unique"`
 	StreamLimit int64     `db:"stream_limit"`
+	UserID      uuid.UUID `db:"user_id,fk"`
 	CreatedAt   time.Time `db:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at"`
 }
