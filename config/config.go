@@ -7,8 +7,10 @@ import (
 )
 
 type Config struct {
-	DB   DBConfig
-	HTTP HTTPConfig
+	DB      DBConfig
+	HTTP    HTTPConfig
+	Discord DiscordConfig
+	Twitch  TwitchConfig
 }
 
 func NewConfig() *Config {
@@ -18,7 +20,9 @@ func NewConfig() *Config {
 	}
 
 	return &Config{
-		DB:   LoadDBConfig(),
-		HTTP: LoadHTTPConfig(),
+		DB:      LoadDBConfig(),
+		HTTP:    LoadHTTPConfig(),
+		Discord: LoadDiscordConfig(),
+		Twitch:  LoadTwitchConfig(),
 	}
 }
