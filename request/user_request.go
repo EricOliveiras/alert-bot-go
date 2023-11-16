@@ -1,6 +1,8 @@
 package request
 
 type CreateUser struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	DiscordID string `json:"id"`
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Avatar    string `json:"avatar"`
 }
