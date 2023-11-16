@@ -23,16 +23,23 @@ func NewUserService(repository repository.IUserRepository) *UserService {
 }
 
 func (us *UserService) Create(ctx context.Context, user *request.CreateUser) error {
+	existUser, err := us.Repository.GetByEmail(ctx, user.Email)
+	if existUser != nil && err == nil {
+		return nil
+	}
+
 	createUser := builder.NewUserBuilder().
 		SetID(uuid.New()).
+		SetDiscordID(user.DiscordID).
 		SetUsername(user.Username).
 		SetEmail(user.Email).
+		SetAvatar(user.Avatar).
 		SetChannelLimit(1).
 		SetCreatedAt(time.Now()).
 		SetUpdatedAt(time.Now()).
 		Build()
 
-	err := us.Repository.Create(ctx, &createUser)
+	err = us.Repository.Create(ctx, &createUser)
 	if err != nil {
 		return err
 	}
