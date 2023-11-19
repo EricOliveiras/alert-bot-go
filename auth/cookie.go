@@ -17,3 +17,15 @@ func SaveCookie(w http.ResponseWriter, token *oauth2.Token) {
 	}
 	http.SetCookie(w, &cookie)
 }
+
+func ClearCookie(w http.ResponseWriter) {
+	pastTime := time.Now().AddDate(0, 0, -1)
+	cookie := http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Expires:  pastTime,
+		MaxAge:   -1,
+		HttpOnly: true,
+	}
+	http.SetCookie(w, &cookie)
+}
