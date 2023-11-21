@@ -8,6 +8,7 @@ import (
 	"github.com/ericoliveiras/alert-bot-go/handler"
 	"github.com/ericoliveiras/alert-bot-go/middleware"
 	"github.com/ericoliveiras/alert-bot-go/request"
+	"github.com/ericoliveiras/alert-bot-go/response"
 	"golang.org/x/oauth2"
 )
 
@@ -38,7 +39,19 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseJSON, err := json.Marshal(&user)
+	userGuilds, err := GetGuilds(w, r, token)
+	if err != nil {
+		log.Printf("Error fetching user's guilds: %s", err.Error())
+		http.Error(w, "Error fetching user's guilds", http.StatusInternalServerError)
+		return
+	}
+
+	response := response.UserGuildsResponse{
+		User:   user,
+		Guilds: userGuilds,
+	}
+
+	responseJSON, err := json.Marshal(&response)
 	if err != nil {
 		log.Printf("Error encoding JSON response: %s", err.Error())
 		http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
