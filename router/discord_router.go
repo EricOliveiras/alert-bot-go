@@ -1,6 +1,7 @@
 package router
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -9,7 +10,9 @@ import (
 	"github.com/ericoliveiras/alert-bot-go/controller"
 	"github.com/ericoliveiras/alert-bot-go/handler"
 	"github.com/ericoliveiras/alert-bot-go/middleware"
+	"github.com/ericoliveiras/alert-bot-go/response"
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/oauth2"
 )
 
 var cfg = config.NewConfig()
@@ -31,7 +34,7 @@ func HandleMain(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
-	url := discordOauthConfig.AuthCodeURL(oauthStateString)
+	url := cfg.Discord.DiscordBotInvite + oauthStateString
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
@@ -63,4 +66,40 @@ func HandleCallback(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 	userController := controller.NewUserController(db)
 
 	userController.Create(w, r, resp)
+}
+
+func GetGuilds(w http.ResponseWriter, r *http.Request, token *oauth2.Token) ([]response.GuildResponse, error) {
+	resp, err := handler.GetInfo(w, r, token, cfg.Discord.GetGuildsInfoUrl)
+	if err != nil {
+		log.Printf("Error getting guilds information: %s", err.Error())
+		http.Error(w, "Error getting guilds information", http.StatusInternalServerError)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var userGuilds []response.GuildResponse
+	err = json.NewDecoder(resp.Body).Decode(&userGuilds)
+	if err != nil {
+		log.Printf("Error decoding user's guilds JSON response: %s", err.Error())
+		return nil, err
+	}
+
+	var userGuildsOwner []response.GuildResponse
+	for _, guild := range userGuilds {
+		if guild.Owner {
+			userGuildsOwner = append(userGuildsOwner, guild)
+		}
+	}
+
+	var guildBotIsPresent []response.GuildResponse
+	for _, guild := range userGuildsOwner {
+		botIsPresent := handler.BotIsInGuild(cfg.Discord.Token, guild.ID, cfg.Discord.ClientID)
+		if botIsPresent {
+			guildBotIsPresent = append(guildBotIsPresent, guild)
+		}
+	}
+
+	guildsWithChannels := handler.FetchGuildTextChannels(guildBotIsPresent, cfg.Discord.Token)
+
+	return guildsWithChannels, nil
 }
