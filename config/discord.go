@@ -11,6 +11,7 @@ type DiscordConfig struct {
 	RedirectURL      string
 	GetUserInfoUrl   string
 	GetGuildsInfoUrl string
+	DiscordBotInvite string
 	Scopes           []string
 }
 
@@ -24,6 +25,7 @@ func LoadDiscordConfig() DiscordConfig {
 		RedirectURL:      os.Getenv("DISCORD_URL_REDIRECT"),
 		GetUserInfoUrl:   os.Getenv("USER_INFO_URL"),
 		GetGuildsInfoUrl: os.Getenv("GUILD_INFO_URL"),
+		DiscordBotInvite: os.Getenv("DISCORD_BOT_INVITE"),
 		Scopes:           []string{"identify", "email", "guilds"},
 	}
 }
