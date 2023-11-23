@@ -2,7 +2,6 @@ package application
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/ericoliveiras/alert-bot-go/config"
 	"github.com/ericoliveiras/alert-bot-go/router"
@@ -12,12 +11,9 @@ import (
 func Start(config *config.Config) {
 	app := server.NewServer(config)
 
-	http.HandleFunc("/", router.HandleMain)
-	http.HandleFunc("/login", router.HandleLogin)
-	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		router.HandleCallback(w, r, app.DB)
-	})
-	http.HandleFunc("/dashboard", router.GetUser)
+	router.SetupOauthRoutes(app.DB)
+	router.SetupUserRoutes()
+	router.SetupDiscordRoutes(app.DB)
 
 	err := app.Start(config.HTTP.Port)
 	if err != nil {
