@@ -12,6 +12,7 @@ type IUserRepository interface {
 	Create(ctx context.Context, user *models.User) error
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 	GetByDiscordID(ctx context.Context, discordId string) (*models.User, error)
+	GetById(ctx context.Context, id uuid.UUID) (*models.User, error)
 	UpdateChannelLimit(ctx context.Context, userId uuid.UUID, limit int) error
 }
 
@@ -56,6 +57,18 @@ func (ur *UserRepository) GetByDiscordID(ctx context.Context, discordId string) 
 
 	query := "SELECT * FROM users WHERE discord_id = $1"
 	err := ur.DB.GetContext(ctx, &user, query, discordId)
+	if err != nil {
+		return &models.User{}, err
+	}
+
+	return &user, nil
+}
+
+func (ur *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*models.User, error) {
+	var user models.User
+
+	query := "SELECT * FROM users WHERE id = $1"
+	err := ur.DB.GetContext(ctx, &user, query, id)
 	if err != nil {
 		return &models.User{}, err
 	}
