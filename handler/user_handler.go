@@ -2,8 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
+	"github.com/ericoliveiras/alert-bot-go/auth"
 	"github.com/ericoliveiras/alert-bot-go/middleware"
 	"github.com/ericoliveiras/alert-bot-go/repository"
 	"github.com/ericoliveiras/alert-bot-go/request"
@@ -15,18 +17,21 @@ import (
 )
 
 type UserHandler struct {
-	UserService *service.UserService
+	UserService   *service.UserService
+	DiscordServer *service.DiscordChannelService
 }
 
 func NewUserHandler(db *sqlx.DB) *UserHandler {
 	userRepository := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepository)
-	userHandler := UserHandler{UserService: userService}
+	channelRepository := repository.NewDiscordRepository(db)
+	discordService := service.NewDiscordChannelService(channelRepository, userRepository)
+	userHandler := UserHandler{UserService: userService, DiscordServer: discordService}
 
 	return &userHandler
 }
 
-func (uc *UserHandler) Create(w http.ResponseWriter, r *http.Request, resp *http.Response) {
+func (uc *UserHandler) Create(w http.ResponseWriter, r *http.Request, resp *http.Response, discordToken *oauth2.Token) {
 	var user request.CreateUser
 
 	defer resp.Body.Close()
@@ -37,37 +42,92 @@ func (uc *UserHandler) Create(w http.ResponseWriter, r *http.Request, resp *http
 		return
 	}
 
-	err = uc.UserService.Create(r.Context(), &user)
+	returnedUser, err := uc.UserService.Create(r.Context(), &user)
 	if err != nil {
+		log.Fatalf("Error: %v", err.Error())
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
 
+	jwtToken, err := utils.GenerateToken(returnedUser.ID, returnedUser.DiscordID, discordToken)
+	if err != nil {
+		http.Error(w, "Failed to create JWT token", http.StatusInternalServerError)
+		return
+	}
+
+	auth.SaveTokenCookie(w, jwtToken)
+
 	http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 }
 
-func GetUser(w http.ResponseWriter, r *http.Request) {
+func (uc *UserHandler) UserInfo(w http.ResponseWriter, r *http.Request) {
 	if !middleware.IsAuthenticated(r) {
 		http.Error(w, "Missing auth header", http.StatusUnauthorized)
 		return
 	}
 
-	cookie, _ := r.Cookie("access_token")
-	token := &oauth2.Token{
-		AccessToken: cookie.Value,
-	}
+	cookie, _ := r.Cookie("jwt_token")
 
-	resp, err := utils.GetInfo(w, r, token, cfg.Discord.GetUserInfoUrl)
+	id, _, token, err := utils.GetIDsFromToken(cookie.Value)
 	if err != nil {
-		http.Error(w, "Error getting user information", http.StatusInternalServerError)
+		http.Error(w, "Error getting cookie value", http.StatusInternalServerError)
 		return
 	}
-	defer resp.Body.Close()
 
-	var user request.CreateUser
-	err = json.NewDecoder(resp.Body).Decode(&user)
+	user, err := uc.UserService.GetById(r.Context(), id)
 	if err != nil {
-		http.Error(w, "Error decoding JSON response", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userResponse := response.UserResponse{
+		ID:           user.ID,
+		DiscordID:    user.DiscordID,
+		Username:     user.Username,
+		Email:        user.Email,
+		Avatar:       user.Avatar,
+		ChannelLimit: user.ChannelLimit,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+	}
+
+	if user.ChannelLimit == 0 {
+		channel, err := uc.DiscordServer.GetChannelByUserID(r.Context(), user.ID)
+		if err != nil {
+			http.Error(w, "Error getting channel", http.StatusInternalServerError)
+			return
+		}
+
+		channelFormat := response.ChannelResponse{
+			ID:          channel.ID,
+			Name:        channel.Name,
+			ChannelId:   channel.ChannelId,
+			ServerId:    channel.ServerId,
+			StreamLimit: channel.StreamLimit,
+			UserID:      channel.UserID,
+			CreatedAt:   channel.CreatedAt,
+			UpdatedAt:   channel.UpdatedAt,
+		}
+
+		userChannelResponse := response.UserChannelResponse{
+			User:    userResponse,
+			Channel: channelFormat,
+		}
+
+		responseJSON, err := json.Marshal(&userChannelResponse)
+		if err != nil {
+			http.Error(w, "Error encoding JSON response", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, err = w.Write(responseJSON)
+		if err != nil {
+			http.Error(w, "Error writing JSON response", http.StatusInternalServerError)
+			return
+		}
+
 		return
 	}
 
@@ -78,7 +138,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := response.UserGuildsResponse{
-		User:   user,
+		User:   userResponse,
 		Guilds: userGuilds,
 	}
 
