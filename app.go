@@ -12,7 +12,7 @@ func Start(config *config.Config) {
 	app := server.NewServer(config)
 
 	router.SetupOauthRoutes(app.DB)
-	router.SetupUserRoutes()
+	router.SetupUserRoutes(app.DB)
 	router.SetupDiscordRoutes(app.DB)
 
 	err := app.Start(config.HTTP.Port)
