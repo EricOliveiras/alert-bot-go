@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ericoliveiras/alert-bot-go/builder"
+	"github.com/ericoliveiras/alert-bot-go/models"
 	"github.com/ericoliveiras/alert-bot-go/repository"
 	"github.com/ericoliveiras/alert-bot-go/request"
 	"github.com/google/uuid"
@@ -62,4 +63,13 @@ func (ds *DiscordChannelService) Create(ctx context.Context, discordChannel *req
 	}
 
 	return nil
+}
+
+func (ds *DiscordChannelService) GetChannelByUserID(ctx context.Context, userID uuid.UUID) (*models.DiscordChannel, error) {
+	channel, err := ds.DiscordRepository.GetChannelByUserID(ctx, userID)
+	if err != nil {
+		return &models.DiscordChannel{}, err
+	}
+
+	return channel, nil
 }
