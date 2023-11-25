@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ericoliveiras/alert-bot-go/auth"
 	"github.com/ericoliveiras/alert-bot-go/config"
 	"github.com/ericoliveiras/alert-bot-go/middleware"
 	"github.com/ericoliveiras/alert-bot-go/repository"
@@ -95,17 +94,15 @@ func HandleCallback(w http.ResponseWriter, r *http.Request, db *sqlx.DB) {
 		return
 	}
 
-	auth.SaveCookie(w, token)
-
 	resp, err := utils.GetInfo(w, r, token, cfg.Discord.GetUserInfoUrl)
 	if err != nil {
 		http.Error(w, "Error exchanging code for token", http.StatusBadRequest)
 	}
 	defer resp.Body.Close()
 
-	userController := NewUserHandler(db)
+	userHandler := NewUserHandler(db)
 
-	userController.Create(w, r, resp)
+	userHandler.Create(w, r, resp, token)
 }
 
 func GetGuilds(w http.ResponseWriter, r *http.Request, token *oauth2.Token) ([]response.GuildResponse, error) {
