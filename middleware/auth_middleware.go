@@ -8,7 +8,7 @@ import (
 )
 
 func IsAuthenticated(r *http.Request) bool {
-	cookie, err := r.Cookie("access_token")
+	cookie, err := r.Cookie("jwt_token")
 	if err != nil {
 		return false
 	}
