@@ -3,17 +3,15 @@ package auth
 import (
 	"net/http"
 	"time"
-
-	"golang.org/x/oauth2"
 )
 
-func SaveCookie(w http.ResponseWriter, token *oauth2.Token) {
+func SaveTokenCookie(w http.ResponseWriter, tokenString string) {
 	expiration := time.Now().Add(24 * time.Hour)
 	cookie := http.Cookie{
-		Name:     "access_token",
-		Value:    token.AccessToken,
+		Name:     "jwt_token",
+		Value:    tokenString,
 		Expires:  expiration,
-		HttpOnly: true,
+		HttpOnly: false,
 	}
 	http.SetCookie(w, &cookie)
 }
@@ -25,7 +23,7 @@ func ClearCookie(w http.ResponseWriter) {
 		Value:    "",
 		Expires:  pastTime,
 		MaxAge:   -1,
-		HttpOnly: true,
+		HttpOnly: false,
 	}
 	http.SetCookie(w, &cookie)
 }
