@@ -47,7 +47,7 @@ func (us *UserService) Create(ctx context.Context, user *request.CreateUser) (*m
 		return &models.User{}, err
 	}
 
-	return existUser, nil
+	return &createUser, nil
 }
 
 func (us *UserService) GetById(ctx context.Context, id uuid.UUID) (*models.User, error) {
