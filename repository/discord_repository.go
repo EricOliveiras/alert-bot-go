@@ -11,6 +11,8 @@ import (
 type IDiscordRepository interface {
 	Create(ctx context.Context, discordChannel *models.DiscordChannel) error
 	GetChannelByUserID(ctx context.Context, userID uuid.UUID) (*models.DiscordChannel, error)
+	GetChannelByID(ctx context.Context, discordID uuid.UUID) (*models.DiscordChannel, error)
+	UpdateStreamLimit(ctx context.Context, channelID uuid.UUID, limit int) error
 }
 
 type DiscordRepository struct {
@@ -44,4 +46,26 @@ func (dr *DiscordRepository) GetChannelByUserID(ctx context.Context, userID uuid
 	}
 
 	return &channel, nil
+}
+
+func (dr *DiscordRepository) GetChannelByID(ctx context.Context, discordID uuid.UUID) (*models.DiscordChannel, error) {
+	var channel models.DiscordChannel
+
+	query := "SELECT * FROM discord_channels WHERE id = $1"
+	if err := dr.DB.GetContext(ctx, &channel, query, discordID); err != nil {
+		return &models.DiscordChannel{}, err
+	}
+
+	return &channel, nil
+}
+
+func (dr *DiscordRepository) UpdateStreamLimit(ctx context.Context, channelID uuid.UUID, limit int) error {
+	query := "UPDATE discord_channels SET stream_limit = $1 WHERE id = $2"
+
+	_, err := dr.DB.ExecContext(ctx, query, limit, channelID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
