@@ -14,6 +14,7 @@ import (
 
 type DiscordChannelServiceWrapper interface {
 	Create(ctx context.Context, discordChannel *request.CreateDiscordChannel) error
+	GetChannelByID(ctx context.Context, discordID uuid.UUID) (*models.DiscordChannel, error)
 }
 
 type DiscordChannelService struct {
