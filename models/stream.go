@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Stream struct {
-	ID              int64            `db:"id,autoincr"`
+	ID              int              `db:"id,autoincr"`
 	Name            string           `db:"name,unique"`
 	ImageUrl        string           `db:"image_url"`
 	IsLive          bool             `db:"is_live"`
