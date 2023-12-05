@@ -58,7 +58,7 @@ func (ss *StreamService) Create(ctx context.Context, stream *request.StreamReque
 		}
 
 		discordStream := &models.DiscordChannelStream{
-			DiscordChannelID: channel.ID,
+			DiscordChannelID: channel.ChannelId,
 			StreamID:         streamByName.ID,
 		}
 
@@ -94,7 +94,7 @@ func (ss *StreamService) Create(ctx context.Context, stream *request.StreamReque
 	}
 
 	discordStream := &models.DiscordChannelStream{
-		DiscordChannelID: channel.ID,
+		DiscordChannelID: channel.ChannelId,
 		StreamID:         createdStream.ID,
 	}
 
