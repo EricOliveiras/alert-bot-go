@@ -1,8 +1,10 @@
 package server
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ericoliveiras/alert-bot-go/config"
@@ -23,15 +25,24 @@ func NewServer(config *config.Config) *Server {
 		log.Fatalf("Error: %v", err)
 	}
 
-	discord, err := discord.InitDiscord(config.Discord.Token)
+	disc, err := discord.InitDiscord(config.Discord.Token)
 	if err != nil {
 		log.Fatalf("Error initializing Discord: %v", err)
 	}
 
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			discord.Bot(context.Background(), disc, conn)
+		}
+	}()
+
 	return &Server{
 		DB:      conn,
 		Config:  config,
-		Discord: discord,
+		Discord: disc,
 	}
 }
 
