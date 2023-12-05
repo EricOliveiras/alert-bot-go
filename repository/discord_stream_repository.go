@@ -11,6 +11,7 @@ import (
 type IDiscordStreamRepository interface {
 	Create(ctx context.Context, discord_stream *models.DiscordChannelStream) error
 	ChannelHasStream(ctx context.Context, channelID uuid.UUID, streamID int) (bool, error)
+	GetAllByStreamID(ctx context.Context, streamID int) ([]models.DiscordChannelStream, error)
 }
 
 type DiscordStreamRepository struct {
@@ -51,4 +52,21 @@ func (dsr *DiscordStreamRepository) ChannelHasStream(ctx context.Context, channe
 	}
 
 	return exists, nil
+}
+
+func (dsr *DiscordStreamRepository) GetAllByStreamID(ctx context.Context, streamID int) ([]models.DiscordChannelStream, error) {
+	var discordChannels []models.DiscordChannelStream
+
+	query := `
+		SELECT discord_channel_id, stream_id
+		FROM discord_channel_streams
+		WHERE stream_id = $1
+	`
+
+	err := dsr.DB.SelectContext(ctx, &discordChannels, query, streamID)
+	if err != nil {
+		return nil, err
+	}
+
+	return discordChannels, nil
 }
