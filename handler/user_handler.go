@@ -61,8 +61,14 @@ func (uc *UserHandler) Create(w http.ResponseWriter, r *http.Request, resp *http
 }
 
 func (uc *UserHandler) UserInfo(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	if !middleware.IsAuthenticated(r) {
 		http.Error(w, "Missing auth header", http.StatusUnauthorized)
+		http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
 		return
 	}
 
