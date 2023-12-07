@@ -15,6 +15,7 @@ import (
 type DiscordChannelServiceWrapper interface {
 	Create(ctx context.Context, discordChannel *request.CreateDiscordChannel) error
 	GetChannelByID(ctx context.Context, discordID uuid.UUID) (*models.DiscordChannel, error)
+	Delete(ctx context.Context, userId uuid.UUID, channelId string) error
 }
 
 type DiscordChannelService struct {
@@ -73,4 +74,22 @@ func (ds *DiscordChannelService) GetChannelByUserID(ctx context.Context, userID 
 	}
 
 	return channel, nil
+}
+
+func (ds *DiscordChannelService) Delete(ctx context.Context, userId uuid.UUID, channelId string) error {
+	user, err := ds.UserRepository.GetById(ctx, userId)
+	if err != nil {
+		return err
+	}
+
+	if err := ds.DiscordRepository.Delete(ctx, channelId); err != nil {
+		return err
+	}
+
+	err = ds.UserRepository.UpdateChannelLimit(ctx, userId, user.ChannelLimit+1)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
