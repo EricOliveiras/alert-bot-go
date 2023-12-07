@@ -31,7 +31,7 @@ func NewDiscordHandler(db *sqlx.DB) *DiscordHandler {
 
 func (dc *DiscordHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed 1", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -139,4 +139,37 @@ func GetGuilds(w http.ResponseWriter, r *http.Request, token *oauth2.Token) ([]r
 	guildsWithChannels := utils.FetchGuildTextChannels(guildBotIsPresent, cfg.Discord.Token)
 
 	return guildsWithChannels, nil
+}
+
+func (dc *DiscordHandler) HandleDeleteChannel(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := r.Cookie("jwt_token")
+	if err != nil {
+		http.Error(w, "Error getting cookie value", http.StatusInternalServerError)
+		return
+	}
+
+	id, _, _, err := utils.GetIDsFromToken(cookie.Value)
+	if err != nil {
+		http.Error(w, "Error getting user ID from token", http.StatusInternalServerError)
+		return
+	}
+
+	channelID := r.URL.Query().Get("channel_id")
+	if channelID == "" {
+		http.Error(w, "Channel ID not provided", http.StatusBadRequest)
+		return
+	}
+
+	err = dc.DiscordService.Delete(r.Context(), id, channelID)
+	if err != nil {
+		http.Error(w, "Error deleting channel", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
