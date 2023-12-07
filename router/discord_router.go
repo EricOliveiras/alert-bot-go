@@ -10,4 +10,5 @@ import (
 func SetupDiscordRoutes(db *sqlx.DB) {
 	discordHandler := handler.NewDiscordHandler(db)
 	http.HandleFunc("/discord-channel/create", discordHandler.Create)
+	http.HandleFunc("/discord-channel/delete", discordHandler.HandleDeleteChannel)
 }
