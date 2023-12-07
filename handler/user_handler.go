@@ -68,7 +68,7 @@ func (uc *UserHandler) UserInfo(w http.ResponseWriter, r *http.Request) {
 
 	if !middleware.IsAuthenticated(r) {
 		http.Error(w, "Missing auth header", http.StatusUnauthorized)
-		http.Redirect(w, r, "/dashboard", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
