@@ -13,6 +13,7 @@ type IDiscordRepository interface {
 	GetChannelByUserID(ctx context.Context, userID uuid.UUID) (*models.DiscordChannel, error)
 	GetChannelByID(ctx context.Context, discordID uuid.UUID) (*models.DiscordChannel, error)
 	UpdateStreamLimit(ctx context.Context, channelID uuid.UUID, limit int) error
+	Delete(ctx context.Context, channelId string) error
 }
 
 type DiscordRepository struct {
@@ -64,6 +65,29 @@ func (dr *DiscordRepository) UpdateStreamLimit(ctx context.Context, channelID uu
 
 	_, err := dr.DB.ExecContext(ctx, query, limit, channelID)
 	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dr *DiscordRepository) Delete(ctx context.Context, channelId string) error {
+	tx, err := dr.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM discord_channel_streams WHERE discord_channel_id = $1", channelId)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(ctx, "DELETE FROM discord_channels WHERE channel_id = $1", channelId)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 
