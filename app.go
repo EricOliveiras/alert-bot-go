@@ -14,7 +14,7 @@ func Start(config *config.Config) {
 	router.SetupOauthRoutes(app.DB)
 	router.SetupUserRoutes(app.DB)
 	router.SetupDiscordRoutes(app.DB)
-	router.SetupStreamRoutes(app.DB)
+	router.SetupStreamRoutes(app.DB, app.Discord)
 
 	err := app.Start(config.HTTP.Port)
 	if err != nil {
