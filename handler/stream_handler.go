@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/ericoliveiras/alert-bot-go/middleware"
 	"github.com/ericoliveiras/alert-bot-go/repository"
 	"github.com/ericoliveiras/alert-bot-go/request"
@@ -15,7 +16,7 @@ type StreamHandler struct {
 	StreamService *service.StreamService
 }
 
-func NewStreamHandler(db *sqlx.DB) *StreamHandler {
+func NewStreamHandler(db *sqlx.DB, discordSession *discordgo.Session) *StreamHandler {
 	streamRepository := repository.NewStreamRepository(db)
 	discordRepository := repository.NewDiscordRepository(db)
 	discordStreamRepository := repository.NewDiscordStreamRepository(db)
@@ -23,6 +24,7 @@ func NewStreamHandler(db *sqlx.DB) *StreamHandler {
 		streamRepository,
 		discordRepository,
 		discordStreamRepository,
+		discordSession,
 	)
 	streamHandler := StreamHandler{
 		streamService,
