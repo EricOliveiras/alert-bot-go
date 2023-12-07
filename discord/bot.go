@@ -13,7 +13,7 @@ import (
 
 func Bot(ctx context.Context, dg *discordgo.Session, db *sqlx.DB) {
 	var streamRepository = repository.NewStreamRepository(db)
-	
+
 	streams, err := streamRepository.GetAllStreams(ctx)
 	if err != nil {
 		log.Println("Error getting streams:", err)
@@ -42,20 +42,24 @@ func CheckAndNotify(dg *discordgo.Session, stream models.Stream, streamerIsLive 
 	}
 
 	if streamerIsLive && !stream.IsLive {
-		sendAlert(dg, stream, discordChannels)
+		SendAlert(dg, stream, discordChannels)
 		err := streamRepository.UpdateStreamIsLive(context.Background(), stream.ID, true)
 		if err != nil {
 			log.Println("Error updating stream status in database:", err)
 		}
-	} else if !streamerIsLive && stream.IsLive {
+		return
+	}
+
+	if !streamerIsLive && stream.IsLive {
 		err := streamRepository.UpdateStreamIsLive(context.Background(), stream.ID, false)
 		if err != nil {
 			log.Println("Error updating stream status in database:", err)
 		}
+		return
 	}
 }
 
-func sendAlert(dg *discordgo.Session, stream models.Stream, discordChannels []models.DiscordChannelStream) {
+func SendAlert(dg *discordgo.Session, stream models.Stream, discordChannels []models.DiscordChannelStream) {
 	for _, discordChannel := range discordChannels {
 		channel, err := dg.State.Channel(discordChannel.DiscordChannelID)
 		if err != nil {
