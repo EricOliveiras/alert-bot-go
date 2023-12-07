@@ -3,10 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/ericoliveiras/alert-bot-go/builder"
+	"github.com/ericoliveiras/alert-bot-go/discord"
 	"github.com/ericoliveiras/alert-bot-go/models"
 	"github.com/ericoliveiras/alert-bot-go/repository"
 	"github.com/ericoliveiras/alert-bot-go/request"
@@ -21,17 +24,20 @@ type StreamService struct {
 	StreamRepository        repository.IStreamRepository
 	DiscordRepository       repository.IDiscordRepository
 	DiscordStreamRepository repository.IDiscordStreamRepository
+	Session                 *discordgo.Session
 }
 
 func NewStreamService(
 	streamRepository repository.IStreamRepository,
 	discordRepository repository.IDiscordRepository,
 	discordStreamRepository repository.IDiscordStreamRepository,
+	session *discordgo.Session,
 ) *StreamService {
 	return &StreamService{
 		StreamRepository:        streamRepository,
 		DiscordRepository:       discordRepository,
 		DiscordStreamRepository: discordStreamRepository,
+		Session: session,
 	}
 }
 
@@ -65,6 +71,21 @@ func (ss *StreamService) Create(ctx context.Context, stream *request.StreamReque
 		err = ss.DiscordStreamRepository.Create(ctx, discordStream)
 		if err != nil {
 			return err
+		}
+
+		err = ss.DiscordRepository.UpdateStreamLimit(ctx, channel.ID, channel.StreamLimit-1)
+		if err != nil {
+			return err
+		}
+
+		discordChannels, err := ss.DiscordStreamRepository.GetAllByStreamID(context.Background(), streamByName.ID)
+		if err != nil {
+			log.Println("Error when searching for Discord channels associated with the stream:", err)
+			return err
+		}
+
+		if streamByName.IsLive {
+			discord.SendAlert(ss.Session, *streamByName, discordChannels)
 		}
 
 		return nil
