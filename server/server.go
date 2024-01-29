@@ -10,6 +10,7 @@ import (
 	"github.com/ericoliveiras/alert-bot-go/config"
 	"github.com/ericoliveiras/alert-bot-go/db"
 	"github.com/ericoliveiras/alert-bot-go/discord"
+	"github.com/ericoliveiras/alert-bot-go/middleware"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -48,5 +49,5 @@ func NewServer(config *config.Config) *Server {
 
 func (server *Server) Start(addr string) error {
 	log.Printf("Server running at :%s\n", addr)
-	return http.ListenAndServe(":"+addr, nil)
+	return http.ListenAndServe(":"+addr, middleware.CorsConfig())
 }
