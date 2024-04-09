@@ -4,12 +4,15 @@ import (
 	"log"
 
 	"github.com/ericoliveiras/alert-bot-go/config"
+	"github.com/ericoliveiras/alert-bot-go/migrations"
 	"github.com/ericoliveiras/alert-bot-go/router"
 	"github.com/ericoliveiras/alert-bot-go/server"
 )
 
 func Start(config *config.Config) {
 	app := server.NewServer(config)
+
+	migrations.RunMigrations(config)
 
 	router.SetupOauthRoutes(app.DB)
 	router.SetupUserRoutes(app.DB)
