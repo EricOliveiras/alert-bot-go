@@ -9,6 +9,13 @@ require (
 )
 
 require (
+	github.com/golang-migrate/migrate/v4 v4.17.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+)
+
+require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/rs/cors v1.10.1
 	golang.org/x/net v0.18.0 // indirect
@@ -21,7 +28,7 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9
-	golang.org/x/crypto v0.15.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/oauth2 v0.14.0
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 )
